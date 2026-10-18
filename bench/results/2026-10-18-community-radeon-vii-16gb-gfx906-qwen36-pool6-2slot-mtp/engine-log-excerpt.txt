@@ -1,0 +1,45 @@
+# Engine log excerpt
+
+Lines copied verbatim from the engine's own log (`strata-qwen36.log`) on the machine this report
+describes (AMD Radeon VII 16 GB, gfx906; Strata 0.1.45, `477ac13c`). Container paths are as the engine
+printed them. No API key appears in these lines.
+
+## The run this report describes
+
+`--max-context 32768 --prefill auto --mtp 4 --pool-workers 6 --batch 2 --batch-mtp` (2 slots at 32K,
+62 of 256 experts per layer in VRAM, the rest on the CPU pool):
+
+```text
+[strata] 2026-10-18 14:36:10 engine started: /opt/Strata/build-906-145/strata --serve --native /opt/Strata-data/models/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf --max-context 32768 --prefill auto --mtp 4 --pool-workers 6 --batch 2 --batch-mtp
+strata-q36: /opt/Strata-data/models/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf: 753 tensors (layout checked), 4.40 GiB on the GPU in 1.7 s (the routed experts are placed after the engine's buffers)
+strata-q36: prompt experts on MMQ (int8)
+strata-q36: 2 sessions (--batch): 1.43 GiB of VRAM each at a context of 32768 (2.87 GiB in all), 9.28 GiB free before them
+strata-q36: context 32768 cells, prompt chunk 2048, MTP block loaded, 6.41 GiB of VRAM free
+strata-q36: hybrid experts: 62 of 256 per layer in VRAM (4.54 GiB), all 18.75 GiB in pinned host memory, the rest of a batch of <= 128 rows on 7 CPU threads, bigger prompt chunks streamed (1.10 GiB staging); 12.7 s
+
+--- the suite's requests (temperature 0 and nothing else: drafts 0 of 0, so MTP is inert) ---
+strata serve: session 0: prompt 34 tokens = 0 reused + 34 read in 737 ms (46.1 tok/s), 24 generated in 583 ms (41.2 tok/s), drafts accepted 0 of 0 (length)
+strata serve: session 0: prompt 1028 tokens = 0 reused + 1028 read in 1550 ms (663.4 tok/s), 8 generated in 248 ms (32.2 tok/s), drafts accepted 0 of 0 (length)
+strata serve: session 1: prompt 51 tokens = 0 reused + 51 read in 505 ms (101.0 tok/s), 100 generated in 3255 ms (30.7 tok/s), drafts accepted 0 of 0 (length)
+strata serve: session 0: prompt 43 tokens = 0 reused + 43 read in 500 ms (86.1 tok/s), 100 generated in 3804 ms (26.3 tok/s), drafts accepted 0 of 0 (length)
+strata serve: session 1: prompt 46 tokens = 0 reused + 46 read in 524 ms (87.8 tok/s), 100 generated in 3390 ms (29.5 tok/s), drafts accepted 0 of 0 (length)
+strata serve: session 0: prompt 51 tokens = 0 reused + 51 read in 496 ms (102.9 tok/s), 100 generated in 3083 ms (32.4 tok/s), drafts accepted 0 of 0 (length)
+strata serve: session 1: prompt 43 tokens = 0 reused + 43 read in 459 ms (93.6 tok/s), 100 generated in 2552 ms (39.2 tok/s), drafts accepted 0 of 0 (length)
+strata serve: session 0: prompt 46 tokens = 0 reused + 46 read in 458 ms (100.4 tok/s), 100 generated in 2548 ms (39.2 tok/s), drafts accepted 0 of 0 (length)
+```
+
+## The same card and model with the penalties zeroed (MTP drafts appear)
+
+A separate run of the same model, same 32K context and the same `--mtp 4 --batch 2 --batch-mtp`, at
+`--pool-workers 4` (the 4-8 band this report recommends; 128 new tokens, greedy, the request adds
+`presence_penalty: 0, frequency_penalty: 0, repeat_penalty: 1`):
+
+```text
+strata serve: session 0: prompt 20 tokens = 0 reused + 20 read in 643 ms (31.1 tok/s), 128 generated in 3987 ms (32.1 tok/s), drafts accepted 86 of 180 (length)
+strata serve: session 1: prompt 20 tokens = 0 reused + 20 read in 267 ms (74.8 tok/s), 128 generated in 2026 ms (63.2 tok/s), drafts accepted 83 of 188 (length)
+strata serve: session 0: prompt 20 tokens = 0 reused + 20 read in 198 ms (100.8 tok/s), 128 generated in 1930 ms (66.3 tok/s), drafts accepted 84 of 184 (length)
+strata serve: session 1: prompt 20 tokens = 0 reused + 20 read in 208 ms (96.0 tok/s), 128 generated in 1861 ms (68.8 tok/s), drafts accepted 87 of 176 (length)
+```
+
+With only `temperature: 0` (the suite's requests, and what setup's own config sends) the engine logs
+`drafts accepted 0 of 0` on this path, so those numbers are without MTP.
