@@ -1,0 +1,47 @@
+Lines copied verbatim from the engine's own log (`strata-q2_0-<context>-<arm>.log`) on the machine this report
+describes (AMD Radeon VII 16 GB, gfx906; engine 0.2.1.4, tag `v0.2.1.4`). Container paths are as the engine
+printed them. No API key appears in these lines.
+
+## The three arms
+
+`--pool-workers` left out (= 15 workers on this 16-core CPU):
+
+```text
+strata generate: CPU pool: 15 workers by default (16 physical cores, 16 logical processors; bounded by every physical core but the host's)
+strata generate: CPU pool tasks/phase: 48 (automatic), participating threads: 16
+strata generate: 15 pool workers on logical processors 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, the host thread on 0 (draining too) (--host-core first)
+strata generate: 15 expert-pool workers + the host thread
+```
+
+`--pool-workers 10`:
+
+```text
+strata generate: CPU pool tasks/phase: 33 (automatic), participating threads: 11
+strata generate: 10 pool workers on logical processors 1,2,3,4,5,6,7,8,9,10, the host thread on 0 (draining too) (--host-core first)
+strata generate: 10 expert-pool workers + the host thread
+```
+
+`--pool-workers 6`:
+
+```text
+strata generate: CPU pool tasks/phase: 21 (automatic), participating threads: 7
+strata generate: 6 pool workers on logical processors 1,2,3,4,5,6, the host thread on 0 (draining too) (--host-core first)
+strata generate: 6 expert-pool workers + the host thread
+strata serve: PCIe share: the CPU pool takes 136 us per missed expert (10.2 GB/s of expert bytes), the link 13.5 GB/s -> pcie_frac 0.40 (was 0.37; --pcie-frac N fixes it, STRATA_PCIE_FRAC_DEFAULT=old keeps the start-up rule)
+```
+
+## The two contexts
+
+65536 (the KV stays in VRAM):
+
+```text
+strata generate: expert cache auto: 11.55 GiB free, 1024 MiB reserved (+184 MiB for the draft head) -> 8052 slots
+strata generate: expert cache 8052 slots, 10.37 GiB of VRAM; policy is
+```
+
+262144 (the KV is streamed):
+
+```text
+strata generate: KV streaming: 32768 of 262144 cells per QSA layer in VRAM, the K/V in 3.09 GiB of pinned RAM
+strata generate: expert cache auto: 10.73 GiB free, 1024 MiB reserved (+184 MiB for the draft head) -> 7417 slots
+```
